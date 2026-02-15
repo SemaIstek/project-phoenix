@@ -27,6 +27,11 @@ venv/
 ENV/
 env/
 .venv
+.env/
+venv.bak/
+venv_backup/
+.env.bak/
+.env_backup/
 
 # IDEs
 .vscode/
@@ -39,6 +44,8 @@ env/
 .env
 .env.local
 .env.*.local
+.env.bak
+.env_backup
 
 # Azure
 .azure/
