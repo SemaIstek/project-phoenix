@@ -1,33 +1,6 @@
-# Core Dependencies
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
-
 # Azure & AI
 azure-identity==1.15.0
 openai==1.12.0
+# Ollama (Local LLM)
+litellm==1.35.0
 pyautogen==0.2.16
-
-# Data Processing
-pandas==2.2.0
-numpy==1.26.3
-python-dotenv==1.0.0
-
-# API & Web
-httpx==0.26.0
-aiofiles==23.2.1
-
-# Testing
-pytest==7.4.4
-pytest-asyncio==0.23.3
-pytest-cov==4.1.0
-
-# Development
-black==24.1.1
-flake8==7.0.0
-mypy==1.8.0
-
-# Frontend (Streamlit)
-streamlit==1.31.0
-plotly==5.18.0
