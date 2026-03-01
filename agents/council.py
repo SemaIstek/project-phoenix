@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Agent Council
 Orchestrates the collaboration between Risk Analyst, Recovery Architect, and Strategy Agent
@@ -83,7 +84,7 @@ class AgentCouncil:
         return final_report
     
     def generate_executive_summary(self, report: Dict[str, Any]) -> str:
-        """Generate executive summary from council report"""
+        """Generate executive summary from council report
         
         Args:
             report: Complete analysis report from analyze_and_recommend()
