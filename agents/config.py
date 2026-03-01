@@ -1,6 +1,6 @@
 """
 Agent Configuration Module
-Centralized configuration for all AI agents
+Centralized configuration for all AI agents with Ollama support
 """
 
 import os
@@ -13,7 +13,12 @@ load_dotenv()
 class AgentConfig:
     """Configuration class for AI agents"""
     
-    # Azure OpenAI Configuration
+    # Ollama Configuration
+    USE_OLLAMA = os.getenv("USE_OLLAMA", "true").lower() == "true"
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+    
+    # Azure OpenAI Configuration (fallback)
     AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
     AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
     AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4")
@@ -24,34 +29,59 @@ class AgentConfig:
     TIMEOUT = int(os.getenv("AGENT_TIMEOUT", "300"))
     TEMPERATURE = 0.7
     
-    # Model Configuration
-    MODEL_NAME = "gpt-4"
-    
     @classmethod
     def get_llm_config(cls) -> Dict[str, Any]:
         """Get LLM configuration for AutoGen agents"""
-        return {
-            "config_list": [
-                {
-                    "model": cls.MODEL_NAME,
-                    "api_type": "azure",
-                    "api_key": cls.AZURE_OPENAI_API_KEY,
-                    "base_url": cls.AZURE_OPENAI_ENDPOINT,
-                    "api_version": cls.AZURE_OPENAI_API_VERSION,
-                }
-            ],
-            "temperature": cls.TEMPERATURE,
-            "timeout": cls.TIMEOUT,
-        }
+        if cls.USE_OLLAMA:
+            # Ollama configuration
+            return {
+                "config_list": [
+                    {
+                        "model": cls.OLLAMA_MODEL,
+                        "base_url": cls.OLLAMA_BASE_URL,
+                        "api_key": "ollama",  # Dummy key for Ollama
+                    }
+                ],
+                "temperature": cls.TEMPERATURE,
+                "timeout": cls.TIMEOUT,
+            }
+        else:
+            # Azure OpenAI configuration
+            return {
+                "config_list": [
+                    {
+                        "model": cls.AZURE_OPENAI_DEPLOYMENT,
+                        "api_type": "azure",
+                        "api_key": cls.AZURE_OPENAI_API_KEY,
+                        "base_url": cls.AZURE_OPENAI_ENDPOINT,
+                        "api_version": cls.AZURE_OPENAI_API_VERSION,
+                    }
+                ],
+                "temperature": cls.TEMPERATURE,
+                "timeout": cls.TIMEOUT,
+            }
     
     @classmethod
     def validate_config(cls) -> bool:
         """Validate that required configuration is present"""
-        if not cls.AZURE_OPENAI_API_KEY:
-            raise ValueError("AZURE_OPENAI_API_KEY is not set")
-        if not cls.AZURE_OPENAI_ENDPOINT:
-            raise ValueError("AZURE_OPENAI_ENDPOINT is not set")
-        return True
+        if cls.USE_OLLAMA:
+            # Check if Ollama is running
+            import httpx
+            try:
+                response = httpx.get(cls.OLLAMA_BASE_URL.replace("/v1", ""), timeout=5)
+                if response.status_code != 200:
+                    raise ValueError("Ollama is not responding properly")
+                print(f"✅ Ollama is running! Using model: {cls.OLLAMA_MODEL}")
+                return True
+            except Exception as e:
+                raise ValueError(f"❌ Ollama is not running! Start it with: ollama serve\nError: {e}")
+        else:
+            # Validate Azure OpenAI
+            if not cls.AZURE_OPENAI_API_KEY:
+                raise ValueError("AZURE_OPENAI_API_KEY is not set")
+            if not cls.AZURE_OPENAI_ENDPOINT:
+                raise ValueError("AZURE_OPENAI_ENDPOINT is not set")
+            return True
 
 
 # Agent System Messages
