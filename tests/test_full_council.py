@@ -86,7 +86,7 @@ try:
         if 'gdp_damage_correlation' in corr:
             print(f"   💰 GDP ↔ Damage: {corr['gdp_damage_correlation']:.3f}")
     
-    print("\n🎉 Project Phoenix is operational with Ollama!")
+    print("\n🎉 Project Phoenix is operational with Azure!")
     
 except Exception as e:
     print(f"\n❌ Council analysis failed: {e}")
