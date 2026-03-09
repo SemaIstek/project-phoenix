@@ -14,7 +14,7 @@ class AgentConfig:
     """Configuration class for AI agents"""
     
     # Ollama Configuration
-    USE_OLLAMA = os.getenv("USE_OLLAMA", "true").lower() == "true"
+    USE_OLLAMA = os.getenv("USE_OLLAMA", "true").lower() == "false"
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
     
