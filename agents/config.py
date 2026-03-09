@@ -1,6 +1,6 @@
 """
 Agent Configuration Module
-Centralized configuration for all AI agents with Ollama support
+Azure OpenAI configuration for Microsoft AutoGen agents
 """
 
 import os
@@ -11,77 +11,54 @@ load_dotenv()
 
 
 class AgentConfig:
-    """Configuration class for AI agents"""
+    """Configuration class for AI agents using Azure OpenAI"""
     
-    # Ollama Configuration
-    USE_OLLAMA = os.getenv("USE_OLLAMA", "true").lower() == "false"
-    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
-    
-    # Azure OpenAI Configuration (fallback)
-    AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT", "")
-    AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
-    AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4")
-    AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
+    # Azure OpenAI Configuration
+    AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+    AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+    AZURE_OPENAI_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o-mini")
+    AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-06-01")
     
     # Agent Settings
     MAX_ITERATIONS = int(os.getenv("MAX_AGENT_ITERATIONS", "10"))
     TIMEOUT = int(os.getenv("AGENT_TIMEOUT", "300"))
-    TEMPERATURE = 0.7
+    TEMPERATURE = float(os.getenv("TEMPERATURE", "0.7"))
     
     @classmethod
     def get_llm_config(cls) -> Dict[str, Any]:
         """Get LLM configuration for AutoGen agents"""
-        if cls.USE_OLLAMA:
-            # Ollama configuration
-            return {
-                "config_list": [
-                    {
-                        "model": cls.OLLAMA_MODEL,
-                        "base_url": cls.OLLAMA_BASE_URL,
-                        "api_key": "ollama",  # Dummy key for Ollama
-                    }
-                ],
-                "temperature": cls.TEMPERATURE,
-                "timeout": cls.TIMEOUT,
-            }
-        else:
-            # Azure OpenAI configuration
-            return {
-                "config_list": [
-                    {
-                        "model": cls.AZURE_OPENAI_DEPLOYMENT,
-                        "api_type": "azure",
-                        "api_key": cls.AZURE_OPENAI_API_KEY,
-                        "base_url": cls.AZURE_OPENAI_ENDPOINT,
-                        "api_version": cls.AZURE_OPENAI_API_VERSION,
-                    }
-                ],
-                "temperature": cls.TEMPERATURE,
-                "timeout": cls.TIMEOUT,
-            }
+        return {
+            "config_list": [
+                {
+                    "model": cls.AZURE_OPENAI_DEPLOYMENT,
+                    "api_type": "azure",
+                    "api_key": cls.AZURE_OPENAI_API_KEY,
+                    "base_url": cls.AZURE_OPENAI_ENDPOINT,
+                    "api_version": cls.AZURE_OPENAI_API_VERSION,
+                }
+            ],
+            "temperature": cls.TEMPERATURE,
+            "timeout": cls.TIMEOUT,
+        }
     
     @classmethod
     def validate_config(cls) -> bool:
-        """Validate that required configuration is present"""
-        if cls.USE_OLLAMA:
-            # Check if Ollama is running
-            import httpx
-            try:
-                response = httpx.get(cls.OLLAMA_BASE_URL.replace("/v1", ""), timeout=5)
-                if response.status_code != 200:
-                    raise ValueError("Ollama is not responding properly")
-                print(f"✅ Ollama is running! Using model: {cls.OLLAMA_MODEL}")
-                return True
-            except Exception as e:
-                raise ValueError(f"❌ Ollama is not running! Start it with: ollama serve\nError: {e}")
-        else:
-            # Validate Azure OpenAI
-            if not cls.AZURE_OPENAI_API_KEY:
-                raise ValueError("AZURE_OPENAI_API_KEY is not set")
-            if not cls.AZURE_OPENAI_ENDPOINT:
-                raise ValueError("AZURE_OPENAI_ENDPOINT is not set")
-            return True
+        """Validate that required Azure OpenAI configuration is present"""
+        if not cls.AZURE_OPENAI_API_KEY:
+            raise ValueError(
+                "❌ AZURE_OPENAI_API_KEY is not set!\n"
+                "💡 Set it in .env file or environment variable"
+            )
+        if not cls.AZURE_OPENAI_ENDPOINT:
+            raise ValueError(
+                "❌ AZURE_OPENAI_ENDPOINT is not set!\n"
+                "💡 Example: https://your-resource.openai.azure.com/"
+            )
+        
+        print(f"✅ Azure OpenAI configured successfully!")
+        print(f"   Model: {cls.AZURE_OPENAI_DEPLOYMENT}")
+        print(f"   Endpoint: {cls.AZURE_OPENAI_ENDPOINT}")
+        return True
 
 
 # Agent System Messages
@@ -99,6 +76,34 @@ You work with structured data and produce quantitative risk assessments.
 Always base your analysis on concrete data and statistical evidence.
 """
 
+CLIMATE_SPECIALIST_SYSTEM_MESSAGE = """
+You are a Climate Data Specialist Agent with expertise in climate science and environmental data analysis.
+
+Your responsibilities:
+1. Analyze climate patterns and trends over time
+2. Identify correlations between climate events and geographic regions
+3. Detect anomalies and extreme weather patterns
+4. Assess climate change indicators (temperature, precipitation, sea level)
+5. Provide insights on climate vulnerability by region
+
+You work with meteorological data and climate models.
+Your analysis helps predict future climate risks and inform adaptation strategies.
+"""
+
+ECONOMIC_ANALYST_SYSTEM_MESSAGE = """
+You are an Economic Impact Analyst Agent specializing in climate-related economic damage assessment.
+
+Your responsibilities:
+1. Analyze economic impacts of climate events on GDP, employment, and trade
+2. Calculate cost-benefit ratios for climate adaptation investments
+3. Model economic recovery pathways and timelines
+4. Assess sector-specific vulnerabilities (agriculture, infrastructure, etc.)
+5. Provide financial forecasts and investment recommendations
+
+You work with economic data and financial models.
+Your analysis helps governments and organizations make informed financial decisions.
+"""
+
 RECOVERY_ARCHITECT_SYSTEM_MESSAGE = """
 You are a Recovery Architect Agent specializing in climate resilience and economic recovery planning.
 
@@ -113,11 +118,25 @@ You transform risk data into concrete recovery scenarios and pathways.
 Think creatively but remain grounded in economic and environmental realities.
 """
 
-STRATEGY_AGENT_SYSTEM_MESSAGE = """
-You are a Strategy Agent specializing in policy recommendations and financial allocation.
+POLICY_STRATEGIST_SYSTEM_MESSAGE = """
+You are a Policy Strategy Agent specializing in climate governance and policy development.
 
 Your responsibilities:
-1. Synthesize insights from Risk Analyst and Recovery Architect
+1. Generate evidence-based policy recommendations for climate adaptation
+2. Prioritize interventions based on urgency, impact, and feasibility
+3. Design implementation roadmaps with clear milestones
+4. Assess policy feasibility considering political, social, and economic constraints
+5. Provide governance frameworks for climate resilience
+
+You work with policy frameworks and stakeholder analysis.
+Your recommendations help governments create effective climate action plans.
+"""
+
+STRATEGY_AGENT_SYSTEM_MESSAGE = """
+You are a Strategy Synthesis Agent specializing in comprehensive policy recommendations and financial allocation.
+
+Your responsibilities:
+1. Synthesize insights from all specialist agents
 2. Create actionable policy recommendations for governments and institutions
 3. Generate financial allocation strategies and investment priorities
 4. Develop implementation roadmaps with clear milestones
