@@ -1,81 +1,85 @@
-"""
-Recovery Architect Agent
-Generates climate resilience scenarios and recovery pathways
-"""
-
-import autogen
-from typing import Dict, List, Any
-from .config import AgentConfig, RECOVERY_ARCHITECT_SYSTEM_MESSAGE
-
+import pandas as pd
+from typing import Dict, Any, List
+from .llm_client import AzureOpenAIClient
+from .config import RECOVERY_ARCHITECT_SYSTEM_MESSAGE
 
 class RecoveryArchitectAgent:
-    """Recovery Architect Agent for climate resilience planning"""
+    """Recovery Architect Agent with Azure OpenAI"""
     
     def __init__(self):
-        """Initialize Recovery Architect Agent"""
-        AgentConfig.validate_config()
-        
-        self.llm_config = AgentConfig.get_llm_config()
-        
-        # Create AutoGen assistant agent
-        self.agent = autogen.AssistantAgent(
-            name="RecoveryArchitect",
-            system_message=RECOVERY_ARCHITECT_SYSTEM_MESSAGE,
-            llm_config=self.llm_config,
-        )
+        self.llm = AzureOpenAIClient()
+        self.system_message = RECOVERY_ARCHITECT_SYSTEM_MESSAGE
     
     def generate_recovery_scenarios(self, risk_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Generate recovery scenarios based on risk analysis""" 
-        risk_level = risk_analysis.get('risk_level', 'MEDIUM')
-        total_damages = risk_analysis.get('total_damages', 0)
+        """
+        Generate AI-powered recovery scenarios
         
-        scenarios = []
+        Args:
+            risk_analysis: Output from Risk Analyst Agent
+            
+        Returns:
+            List of recovery scenarios with AI-generated details
+        """
+        total_damages = risk_analysis['total_damages']
+        risk_level = risk_analysis['risk_level']
         
-        scenarios.append({
-            "scenario_name": "Immediate Emergency Response",
-            "timeframe": "0-6 months",
-            "focus": "Emergency relief and immediate damage mitigation",
-            "estimated_cost": total_damages * 0.15,
-            "expected_impact": "Prevent further immediate losses, stabilize affected regions",
-            "key_actions": [
-                "Deploy emergency relief funds",
-                "Establish disaster response coordination",
-                "Provide immediate financial aid to affected populations",
-                "Assess and secure critical infrastructure"
-            ]
-        })
+        # Base scenario calculations (Python)
+        immediate_cost = total_damages * 0.15
+        short_term_cost = total_damages * 0.35
+        long_term_cost = total_damages * 0.5
         
-        scenarios.append({
-            "scenario_name": "Short-term Recovery & Rebuilding",
-            "timeframe": "6-24 months",
-            "focus": "Infrastructure rebuilding and economic stabilization",
-            "estimated_cost": total_damages * 0.35,
-            "expected_impact": "Restore 60-70% of economic activity, rebuild critical infrastructure",
-            "key_actions": [
-                "Rebuild damaged infrastructure with climate-resilient designs",
-                "Provide business recovery loans and grants",
-                "Implement temporary economic stimulus programs",
-                "Establish early warning systems"
-            ]
-        })
+        # 🤖 Generate AI-powered scenario details
+        context = f"""
+Risk Analysis Summary:
+- Total Damages: ${total_damages:,.0f}
+- Risk Level: {risk_level}
+- High-Risk Countries: {', '.join([c['country'] for c in risk_analysis['high_risk_countries'][:3]])}
+
+Generate THREE detailed recovery scenarios:
+1. IMMEDIATE (0-6 months): ${immediate_cost:,.0f} budget
+2. SHORT-TERM (6-24 months): ${short_term_cost:,.0f} budget  
+3. LONG-TERM (2-10 years): ${long_term_cost:,.0f} budget
+
+For each scenario, provide:
+- Specific focus areas
+- Key actions (3-5 concrete steps)
+- Expected impact
+- Implementation timeline
+"""
         
-        scenarios.append({
-            "scenario_name": "Long-term Climate Resilience",
-            "timeframe": "2-10 years",
-            "focus": "Systemic resilience building and prevention",
-            "estimated_cost": total_damages * 0.50,
-            "expected_impact": "Reduce future climate damages by 40-60%, build sustainable economy",
-            "key_actions": [
-                "Invest in renewable energy infrastructure",
-                "Implement comprehensive climate adaptation strategies",
-                "Develop climate-smart agriculture and industry",
-                "Create green jobs and sustainable economic sectors",
-                "Establish climate risk insurance mechanisms"
-            ]
-        })
+        ai_scenarios = self.llm.generate_completion(
+            system_message=self.system_message,
+            user_message=context,
+            temperature=0.8,  # More creative
+            max_tokens=2000
+        )
+        
+        # Structure scenarios with AI content
+        scenarios = [
+            {
+                "scenario_name": "Immediate Response",
+                "timeframe": "0-6 months",
+                "estimated_cost": immediate_cost,
+                "focus": "Emergency relief and rapid stabilization",
+                "ai_generated_details": ai_scenarios.split("\n\n")[0] if ai_scenarios else "N/A",
+                "priority": "CRITICAL"
+            },
+            {
+                "scenario_name": "Short-term Recovery",
+                "timeframe": "6-24 months",
+                "estimated_cost": short_term_cost,
+                "focus": "Infrastructure repair and economic recovery",
+                "ai_generated_details": ai_scenarios.split("\n\n")[1] if len(ai_scenarios.split("\n\n")) > 1 else "N/A",
+                "priority": "HIGH"
+            },
+            {
+                "scenario_name": "Long-term Resilience",
+                "timeframe": "2-10 years",
+                "estimated_cost": long_term_cost,
+                "focus": "Climate adaptation and sustainable development",
+                "ai_generated_details": ai_scenarios.split("\n\n")[2] if len(ai_scenarios.split("\n\n")) > 2 else "N/A",
+                "priority": "MEDIUM"
+            }
+        ]
         
         return scenarios
-    
-    def get_agent(self) -> autogen.AssistantAgent:
-        """Return the AutoGen agent instance""" 
-        return self.agent

@@ -1,121 +1,86 @@
-# -*- coding: utf-8 -*-
-"""
-Agent Council
-Orchestrates the collaboration between Risk Analyst, Recovery Architect, and Strategy Agent
-"""
-
 import pandas as pd
-from typing import Dict, List, Any, Optional
-import autogen
+from typing import Dict, Any
 from .risk_analyst import RiskAnalystAgent
 from .recovery_architect import RecoveryArchitectAgent
 from .strategy_agent import StrategyAgent
-from .config import AgentConfig
-
 
 class AgentCouncil:
-    """Council of Agents for Climate Risk Analysis and Policy Generation"""
+    """
+    Orchestrates multiple AI agents for climate risk analysis
+    Uses Azure OpenAI for AI-powered insights
+    """
     
     def __init__(self):
-        """Initialize the Agent Council"""
-        # Initialize all three agents
+        """Initialize all agents"""
+        print("🤖 Initializing Agent Council with Azure OpenAI...")
         self.risk_analyst = RiskAnalystAgent()
         self.recovery_architect = RecoveryArchitectAgent()
         self.strategy_agent = StrategyAgent()
-        
-        # Create user proxy for interaction
-        self.user_proxy = autogen.UserProxyAgent(
-            name="UserProxy",
-            human_input_mode="NEVER",
-            max_consecutive_auto_reply=10,
-            code_execution_config=False,
-        )
+        print("✅ All agents ready!")
     
     def analyze_and_recommend(self, climate_data: pd.DataFrame) -> Dict[str, Any]:
         """
-        Run full analysis pipeline: Risk Analysis -> Recovery Planning -> Strategy
+        Full analysis pipeline with AI-powered insights
         
         Args:
-            climate_data: DataFrame containing climate damage information
-            
+            climate_data: DataFrame with columns:
+                - country: str
+                - damage_cost: float
+                - co2_emissions: float
+                - gdp: float
+                
         Returns:
-            Complete analysis with risk assessment, recovery scenarios, and policy recommendations
+            Complete analysis with AI insights
         """
-        # Step 1: Risk Analysis
-        print("🔍 Step 1: Running Risk Analysis...")
+        print("\n" + "="*50)
+        print("🏛️  PROJECT PHOENIX - AI AGENT COUNCIL")
+        print("="*50)
+        
+        # Step 1: Risk Analysis (with AI)
+        print("\n🔍 Step 1: Running Risk Analysis with Azure OpenAI...")
         risk_analysis = self.risk_analyst.analyze_climate_data(climate_data)
-        correlations = self.risk_analyst.calculate_co2_correlation(climate_data)
-        high_risk_countries = self.risk_analyst.identify_high_risk_countries(climate_data)
+        print(f"✅ Risk Level: {risk_analysis['risk_level']}")
+        print(f"✅ Total Damages: ${risk_analysis['total_damages']:,.0f}")
         
-        risk_analysis['correlations'] = correlations
-        risk_analysis['high_risk_countries'] = high_risk_countries
-        
-        print(f"✅ Risk Analysis Complete - Risk Level: {risk_analysis['risk_level']}")
-        
-        # Step 2: Recovery Architecture
-        print("\n🏗️  Step 2: Generating Recovery Scenarios...")
+        # Step 2: Recovery Scenarios (with AI)
+        print("\n🏗️  Step 2: Generating Recovery Scenarios with AI...")
         recovery_scenarios = self.recovery_architect.generate_recovery_scenarios(risk_analysis)
-        
         print(f"✅ Generated {len(recovery_scenarios)} recovery scenarios")
         
-        # Step 3: Strategy Synthesis
-        print("\n📋 Step 3: Creating Policy Recommendations...")
-        synthesis = self.strategy_agent.synthesize_insights(risk_analysis, recovery_scenarios)
-        policy_recommendations = self.strategy_agent.create_policy_recommendations(synthesis)
+        # Step 3: Policy Recommendations (with AI)
+        print("\n📋 Step 3: Creating Policy Recommendations with AI...")
+        policy_recommendations = self.strategy_agent.create_policy_recommendations(
+            risk_analysis, 
+            recovery_scenarios
+        )
+        print(f"✅ Generated {len(policy_recommendations)} policy recommendations")
         
-        print(f"✅ Created {len(policy_recommendations)} policy recommendations")
+        # Step 4: Executive Summary
+        print("\n📊 Step 4: Generating Executive Summary...")
+        total_investment = sum(s['estimated_cost'] for s in recovery_scenarios)
         
-        # Compile final report
-        final_report = {
-            "risk_analysis": risk_analysis,
-            "recovery_scenarios": recovery_scenarios,
-            "synthesis": synthesis,
-            "policy_recommendations": policy_recommendations,
-            "summary": {
-                "total_damages": risk_analysis['total_damages'],
-                "risk_level": risk_analysis['risk_level'],
-                "total_investment_required": synthesis['total_investment_required'],
-                "number_of_scenarios": len(recovery_scenarios),
-                "number_of_policies": len(policy_recommendations)
-            }
+        summary = {
+            "total_damages": risk_analysis['total_damages'],
+            "risk_level": risk_analysis['risk_level'],
+            "countries_analyzed": risk_analysis['statistics']['countries_analyzed'],
+            "total_investment_required": total_investment,
+            "number_of_scenarios": len(recovery_scenarios),
+            "number_of_policies": len(policy_recommendations),
+            "ai_powered": True,
+            "ai_model": "Azure OpenAI gpt-4o-mini"
         }
         
-        print("\n✅ Council Analysis Complete!")
-        return final_report
-    
-    def generate_executive_summary(self, report: Dict[str, Any]) -> str:
-        """Generate executive summary from council report
+        print("\n" + "="*50)
+        print("✅ ANALYSIS COMPLETE!")
+        print("="*50)
+        print(f"💰 Total Investment Required: ${total_investment:,.0f}")
+        print(f"🤖 AI Model: Azure OpenAI gpt-4o-mini")
+        print(f"📊 Scenarios: {len(recovery_scenarios)}")
+        print(f"📜 Policies: {len(policy_recommendations)}")
         
-        Args:
-            report: Complete analysis report from analyze_and_recommend()
-            
-        Returns:
-            Formatted executive summary string
-        """
-        summary = report.get('summary', {})
-        
-        exec_summary = f"""
-╔══════════════════════════════════════════════════════════════╗
-║           PROJECT PHOENIX - EXECUTIVE SUMMARY                ║
-╚══════════════════════════════════════════════════════════════╝
-
-📊 CLIMATE RISK ASSESSMENT
-──────────────────────────────────────────────────────────────
-Total Climate Damages:        ${summary.get('total_damages', 0):,.2f}
-Overall Risk Level:           {summary.get('risk_level', 'UNKNOWN')}
-
-🎯 RECOVERY PLANNING
-──────────────────────────────────────────────────────────────
-Recovery Scenarios Generated: {summary.get('number_of_scenarios', 0)}
-Total Investment Required:    ${summary.get('total_investment_required', 0):,.2f}
-
-📋 POLICY RECOMMENDATIONS
-──────────────────────────────────────────────────────────────
-Policy Recommendations:       {summary.get('number_of_policies', 0)}
-"""
-        
-        return exec_summary
-    
-    def get_agent(self) -> autogen.AssistantAgent:
-        """Return the AutoGen agent instance"""
-        return self.strategy_agent.get_agent()
+        return {
+            "risk_analysis": risk_analysis,
+            "recovery_scenarios": recovery_scenarios,
+            "policy_recommendations": policy_recommendations,
+            "summary": summary
+        }
