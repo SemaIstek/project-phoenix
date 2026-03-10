@@ -4,3 +4,12 @@ openai==1.12.0
 # Ollama (Local LLM)
 litellm==1.35.0
 pyautogen==0.2.16
+# Data Handling
+pandas==2.3.3
+# Testing
+pytest==7.4.0
+# API
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+httpx==0.26.0
