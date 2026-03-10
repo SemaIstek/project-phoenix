@@ -62,7 +62,6 @@ htmlcov/
 Thumbs.db
 
 # Data
-*.csv
 *.xlsx
 *.parquet
 data/raw/
