@@ -5,7 +5,6 @@ on:
     branches: [ main ]
     paths:
       - 'csv/**'
-      - 'csv/filtered_data_complete.csv'
   workflow_dispatch:
 
 jobs:
@@ -14,7 +13,16 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+    
+    - name: List files (Debug)
+      run: |
+        echo "📂 Repository contents:"
+        ls -la
+        echo "📂 CSV folder contents:"
+        ls -la csv/
+        echo "📂 CSV file check:"
+        ls -la csv/filtered_data_complete.csv
     
     - name: Azure Login
       uses: azure/login@v1
@@ -22,22 +30,20 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
     - name: Upload CSV to Azure Blob Storage
-      uses: azure/CLI@v1
-      with:
-        inlineScript: |
-          az storage blob upload \
-            --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
-            --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
-            --name filtered_data_complete.csv \
-            --file ./csv/filtered_data_complete.csv \
-            --overwrite
+      run: |
+        az storage blob upload \
+          --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
+          --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
+          --name filtered_data_complete.csv \
+          --file csv/filtered_data_complete.csv \
+          --auth-mode login \
+          --overwrite
     
     - name: Verify Upload
-      uses: azure/CLI@v1
-      with:
-        inlineScript: |
-          echo "✅ CSV uploaded successfully!"
-          az storage blob list \
-            --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
-            --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
-            --output table
+      run: |
+        echo "✅ CSV uploaded successfully!"
+        az storage blob list \
+          --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
+          --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
+          --auth-mode login \
+          --output table
