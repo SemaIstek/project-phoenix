@@ -1,0 +1,43 @@
+name: Deploy CSV to Azure Storage
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'csv/**'
+      - 'csv/filtered_data_complete.csv'
+  workflow_dispatch:
+
+jobs:
+  deploy-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Upload CSV to Azure Blob Storage
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az storage blob upload \
+            --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
+            --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
+            --name filtered_data_complete.csv \
+            --file ./csv/filtered_data_complete.csv \
+            --overwrite
+    
+    - name: Verify Upload
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          echo "✅ CSV uploaded successfully!"
+          az storage blob list \
+            --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
+            --container-name ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }} \
+            --output table
