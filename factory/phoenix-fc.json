@@ -1,0 +1,9 @@
+{
+	"name": "phoenix-fc",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "f7039d8f-5bb4-40a6-bbde-2975eb2c8750",
+		"tenantId": "960c5a5f-cf3c-4d90-86d6-f587147750ea"
+	}
+}
