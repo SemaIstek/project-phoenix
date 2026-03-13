@@ -1,0 +1,61 @@
+{
+	"name": "SourceDataset_0s8",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "filtered_data_complete.csv",
+				"container": "disaster-data"
+			},
+			"columnDelimiter": ",",
+			"rowDelimiter": "\n",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Disaster Group",
+				"type": "String"
+			},
+			{
+				"name": "Disaster Type",
+				"type": "String"
+			},
+			{
+				"name": "Country",
+				"type": "String"
+			},
+			{
+				"name": "Country Code",
+				"type": "String"
+			},
+			{
+				"name": "Total Deaths",
+				"type": "String"
+			},
+			{
+				"name": "Total Damage",
+				"type": "String"
+			},
+			{
+				"name": "Year",
+				"type": "String"
+			},
+			{
+				"name": "NY.GDP.PCAP",
+				"type": "String"
+			},
+			{
+				"name": "CO2 emissions (kt)",
+				"type": "String"
+			}
+		]
+	}
+}
