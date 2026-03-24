@@ -4,6 +4,30 @@ from .risk_analyst import RiskAnalystAgent
 from .recovery_architect import RecoveryArchitectAgent
 from .strategy_agent import StrategyAgent
 
+# Mapping from raw CSV column names to internal canonical names
+_COLUMN_ALIASES = {
+    "Total Damage": "damage_cost",
+    "CO2 emissions (kt)": "co2_emissions",
+    "NY.GDP.PCAP": "gdp",
+    "Country": "country",
+    "Country Code": "country_code",
+    "Disaster Type": "event_type",
+    "Disaster Group": "disaster_group",
+    "Total Deaths": "total_deaths",
+    "Year": "year",
+}
+
+
+def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Rename raw CSV headers to the canonical names expected by all agents."""
+    rename_map = {k: v for k, v in _COLUMN_ALIASES.items() if k in df.columns}
+    if rename_map:
+        df = df.rename(columns=rename_map)
+    # Lowercase any remaining columns for consistency
+    df.columns = [c.lower() if c not in df.columns else c for c in df.columns]
+    return df
+
+
 class AgentCouncil:
     """
     Orchestrates multiple AI agents for climate risk analysis
@@ -35,7 +59,10 @@ class AgentCouncil:
         print("\n" + "="*50)
         print("🏛️  PROJECT PHOENIX - AI AGENT COUNCIL")
         print("="*50)
-        
+
+        # Normalize column names from raw CSV to internal canonical names
+        climate_data = _normalize_columns(climate_data)
+
         # Step 1: Risk Analysis (with AI)
         print("\n🔍 Step 1: Running Risk Analysis with Azure OpenAI...")
         risk_analysis = self.risk_analyst.analyze_climate_data(climate_data)
